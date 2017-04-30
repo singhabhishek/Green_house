@@ -23,58 +23,9 @@
  * 			@see L0_LowLevel/lpc_sys.h if you wish to override printf/scanf functions.
  *
  */
-#include <stdio.h>
 #include "tasks.hpp"
 #include "examples/examples.hpp"
-#include "Light_sensor_temt6000.hpp"
-#include "i2c2.hpp"
-#include "utilities.h"
-#include "io.hpp"
-#include "adc0.h"
-
-#define ADDRESS      			0x40
-
-#define TEMP_MEASURE_HOLD 		0xE3
-#define HUMD_MEASURE_HOLD  		0xE5
-#define TEMP_MEASURE_NOHOLD  	0xF3
-#define HUMD_MEASURE_NOHOLD  	0xF5
-#define TEMP_PREV   			0xE0
-
-#define WRITE_USER_REG  		0xE6
-#define READ_USER_REG  			0xE7
-#define SOFT_RESET 				0xFE
-
-void i2c_demo(void * p)
-{
-	I2C2& i2c = I2C2::getInstance();
-	const uint8_t dev_address = ADDRESS;
-	uint8_t reg_address = TEMP_MEASURE_NOHOLD;
-	uint8_t data = {0};
-	while(1)
-	{
-		printf("Response = %d\n", i2c.checkDeviceResponse(dev_address));
-		reg_address = TEMP_MEASURE_NOHOLD;
-		data = i2c.readReg(dev_address, reg_address);
-		//i2c.readRegisters(dev_address, reg_address, data, 16);
-		//printf("%d-%d\n", data[0], data[1]);
-		//delay_ms(100);
-		//reg_address = 0xC9;
-		//data = i2c.readReg(dev_address, reg_address);
-		printf("%d\n", data);
-		delay_ms(2000);
-	}
-}
-
-void adc_readings(void * p)
-{
-	while(1)
-	{
-		printf("%d - %d\n", getRawLightValue(), getPercentLightValue());
-		delay_ms(1000);
-	}
-}
-
-
+#include "green_house.hpp"
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -105,7 +56,9 @@ int main(void)
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
 
     //xTaskCreate(i2c_demo, "demo_task", STACK_BYTES(2048), 0, 1, 0);
-    xTaskCreate(adc_readings, "adc_reading_task", STACK_BYTES(2048), 0, 1, 0);
+    xTaskCreate(sensor_readings, "sensor_readings_task", STACK_BYTES(2048), 0, 1, 0);
+    xTaskCreate(display_readings, "display_readings_task", STACK_BYTES(2048), 0, 1, 0);
+    //xTaskCreate(Motor_drive, "Motor_drive_task", STACK_BYTES(2048), 0, 1, 0);
 
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */

@@ -8,6 +8,7 @@
 #ifndef L4_IO_LIGHT_SENSOR_TEMT6000_HPP_
 #define L4_IO_LIGHT_SENSOR_TEMT6000_HPP_
 
+#include <stdint.h>
 
 uint16_t getRawLightValue();
 uint8_t  getPercentLightValue();
