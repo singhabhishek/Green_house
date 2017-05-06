@@ -13,6 +13,9 @@
 #include "io.hpp"
 #include "gpio.hpp"
 #include "Adafruit_RA8875-master/Adafruit_RA8875.h"
+#include "adc0.h"
+#include "printf_lib.h"
+#include "bme280_sensor.hpp"
 
 struct sensor_readings
 {
@@ -39,37 +42,25 @@ char humidityReading[100];
 #define READ_USER_REG  			0xE7
 #define SOFT_RESET 				0xFE
 
-
-void i2c_demo(void * p)
-{
-	I2C2& i2c = I2C2::getInstance();
-	const uint8_t dev_address = ADDRESS;
-	uint8_t reg_address = TEMP_MEASURE_NOHOLD;
-	uint8_t data = {0};
-	while(1)
-	{
-		printf("Response = %d\n", i2c.checkDeviceResponse(dev_address));
-		reg_address = TEMP_MEASURE_NOHOLD;
-		data = i2c.readReg(dev_address, reg_address);
-		//i2c.readRegisters(dev_address, reg_address, data, 16);
-		//printf("%d-%d\n", data[0], data[1]);
-		//delay_ms(100);
-		//reg_address = 0xC9;
-		//data = i2c.readReg(dev_address, reg_address);
-		printf("%d\n", data);
-		delay_ms(2000);
-	}
-}
-
 void sensor_readings(void * p)
 {
+	bool status = init();
+	if (!status)
+	{
+		u0_dbg_printf("Could not find a valid BME280 sensor, check wiring!\n");
+	}
+	else
+	{
+		u0_dbg_printf("Init BME280 sensor done!\n");
+	}
 	while(1)
 	{
 		sReading.light_sensor_raw = getRawLightValue();
 		sReading.light_sensor_percentage = getPercentLightValue();
-		//printf("%d - %d\n", sReading.light_sensor_raw, light_sensor_percentage);
-		LD.setNumber(sReading.light_sensor_percentage);
-		delay_ms(100);
+		u0_dbg_printf("%d - %d\n", sReading.light_sensor_raw, sReading.light_sensor_percentage);
+		u0_dbg_printf("Inbuilt temp sensor = %f, Temperature = %f\n", TS.getCelsius(),  readT());
+		u0_dbg_printf("Humidity = %f\n", readH());
+		delay_ms(1000);
 	}
 }
 
@@ -77,7 +68,7 @@ void display_image()
 {
 	if(!tft.init_display(RA8875_800x480, RA8875_PWM_CLK_DIV1024))
 	{
-		printf("RA8875 Not Found!\n");
+		u0_dbg_printf("RA8875 Not Found!\n");
 		while(1);
 	}
 	tft.graphicsMode();
@@ -128,8 +119,3 @@ void Motor_drive(void * p)
 		delay_ms(1000);
 	}
 }
-
-
-
-
-
