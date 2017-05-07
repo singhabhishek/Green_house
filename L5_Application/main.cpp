@@ -26,32 +26,6 @@
 #include "tasks.hpp"
 #include "examples/examples.hpp"
 #include "green_house.hpp"
-//#include "utilities.h"
-//#include "bme280_sensor.hpp"
-//#include "printf_lib.h"
-//#include "io.hpp"
-//#include <stdio.h>
-
-//void sensor(void * p)
-//{
-//	bool status = init();
-//	if (!status)
-//	{
-//		u0_dbg_printf("Could not find a valid BME280 sensor, check wiring!\n");
-//	}
-//	else
-//	{
-//		u0_dbg_printf("Init BME280 sensor done!\n");
-//	}
-//
-//	while(1)
-//	{
-//		delay_ms(500);
-//		u0_dbg_printf("Inbuilt temp sensor = %f, Temperature = %f\n", TS.getCelsius(),  readT());
-//		u0_dbg_printf("Humidity = %f\n", readH());
-//		delay_ms(500);
-//	}
-//}
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -80,15 +54,8 @@ int main(void)
      * control codes can be learned by typing the "learn" terminal command.
      */
     scheduler_add_task(new terminalTask(PRIORITY_HIGH));
-
-    //xTaskCreate(i2c_demo, "demo_task", STACK_BYTES(2048), 0, 1, 0);
     xTaskCreate(sensor_readings, "sensor_readings_task", STACK_BYTES(2048), 0, 1, 0);
-    xTaskCreate(display_readings, "display_readings_task", STACK_BYTES(2048), 0, 1, 0);
-
-    //xTaskCreate(sensor, "sensor_task", STACK_BYTES(2048*1), 0, 1, 0);
-
-    //xTaskCreate(Motor_drive, "Motor_drive_task", STACK_BYTES(2048), 0, 1, 0);
-
+    xTaskCreate(display_and_actuate, "display_and_actuate", STACK_BYTES(2048), 0, 1, 0);
 
     /* Consumes very little CPU, but need highest priority to handle mesh network ACKs */
     //scheduler_add_task(new wirelessTask(PRIORITY_CRITICAL));

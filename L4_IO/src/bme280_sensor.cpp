@@ -155,6 +155,23 @@ struct ctrl_hum {
 };
 ctrl_hum _humReg;
 
+uint16_t dig_T1;
+int16_t  dig_T2;
+int16_t  dig_T3;
+uint16_t v;
+int32_t var1, var2;
+int32_t adc_T;
+uint8_t data[3] = {0};
+
+uint8_t  dig_H1;
+int16_t  dig_H2;
+uint8_t  dig_H3;
+int16_t  dig_H4;
+int16_t  dig_H5;
+int8_t   dig_H6;
+int32_t adc_H;
+int32_t v_x1_u32r;
+
 bool isReadingCalibration(void)
 {
   uint8_t const rStatus = i2cc.readReg(BME280_ADDRESS, BME280_REGISTER_STATUS);
@@ -194,6 +211,7 @@ bool init()
         return false;
     }
     i2cc.writeReg(BME280_ADDRESS, BME280_REGISTER_SOFTRESET, 0xB6);
+    delay_ms(300);
     while (isReadingCalibration())
           delay_ms(100);
     setSampling(MODE_NORMAL, SAMPLING_X16, SAMPLING_X16, SAMPLING_X16, FILTER_OFF, STANDBY_MS_0_5);
@@ -202,13 +220,8 @@ bool init()
 
 float readT()
 {
-	uint16_t dig_T1;
-	int16_t  dig_T2;
-	int16_t  dig_T3;
-	uint16_t v;
 	int32_t var1, var2;
 	int32_t adc_T;
-	uint8_t data[3] = {0};
 	float T;
 
 	i2cc.readRegisters(BME280_ADDRESS, BME280_REGISTER_TEMPDATA, data, 24);
@@ -241,19 +254,11 @@ float readT()
 float readH(void)
 {
     readT(); // must be done first to get t_fine
-	uint8_t data[2] = {0};
-	uint16_t v;
 	i2cc.readRegisters(BME280_ADDRESS, BME280_REGISTER_HUMIDDATA, data, 16);
-	int32_t adc_H = ((data[0]<<8) | (data[1] & 0xFF));
+	adc_H = ((data[0]<<8) | (data[1] & 0xFF));
     if (adc_H == 0x8000) // value in case humidity measurement was disabled
         return NAN;
 
-	uint8_t  dig_H1;
-	int16_t  dig_H2;
-	uint8_t  dig_H3;
-	int16_t  dig_H4;
-	int16_t  dig_H5;
-	int8_t   dig_H6;
     dig_H1 = i2cc.readReg(BME280_ADDRESS, BME280_REGISTER_DIG_H1);
 
     i2cc.readRegisters(BME280_ADDRESS, BME280_REGISTER_DIG_H2, data, 16);
@@ -267,7 +272,6 @@ float readH(void)
 
 
 
-    int32_t v_x1_u32r;
 
     v_x1_u32r = (t_fine - ((int32_t)76800));
 
@@ -282,8 +286,7 @@ float readH(void)
 
     v_x1_u32r = (v_x1_u32r < 0) ? 0 : v_x1_u32r;
     v_x1_u32r = (v_x1_u32r > 419430400) ? 419430400 : v_x1_u32r;
-    float h = (v_x1_u32r>>12);
-    return  h / 1024.0;
+    return  (v_x1_u32r>>12) / 1024.0;
 }
 
 
